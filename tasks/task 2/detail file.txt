@@ -1,0 +1,38 @@
+~ Product Tags Table
+  => Add Tags
+    -> name
+    -> description
+    -> img
+  => Get Tags
+  => Update Tags
+  => Delete Tags
+
+~ Product Dimension Table
+  => Add Dimension 
+    -> productId
+    -> height
+    -> width
+    -> length
+    -> unit: Enum ID
+  => Get Dimension
+  => Update Dimension
+  => Delete Dimension
+    ~ Product Dimension Enum
+    => Add Dimension Enum: in, m, cm, mm, yd
+    => Get Dimension Enum
+    => Update Dimension Enum
+    => Delete Dimension Enum
+
+~ Product Weight Table
+  => Add Weight
+    -> productId 
+    -> weight
+    -> unit: Enum ID
+  => Get Weight
+  => Update Weight
+  => Delete Weight
+    ~ Product Weight Enum
+    => Add Weight Enum -> kg, g, lb, oz 
+    => Get Weight Enum
+    => Update Weight Enum
+    => Delete Weight Enum
