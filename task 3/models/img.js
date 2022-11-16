@@ -5,7 +5,7 @@ const FileSchema = mongoose.Schema({
     image : {type : Array , required : true}
 })
 
-const FileModel = mongoose.model('image' , FileSchema)
+const imgModel = mongoose.model('images' , FileSchema)
 
 
-module.exports = FileModel;
+module.exports = imgModel;

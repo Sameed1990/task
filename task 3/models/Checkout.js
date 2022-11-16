@@ -19,7 +19,9 @@ const CheckOutSchema = mongoose.Schema({
     promoCode : {type : String ,  default : ""},
     Orderid : {type : Number ,  required : true},
     Status : {type : String ,  default : "Pending"},
+    discountAmount : {type : Number , default : null},
     Subtotal : {type : Number ,  required : true},
+    totalAmount :{type : Number ,  required : true},
     Productids : {type : Array, ref:'products', required : true}
 
 })

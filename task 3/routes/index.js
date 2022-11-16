@@ -12,20 +12,22 @@ const ObjectId = mongoose.Types.ObjectId;
 
 
 // Schemas //
-const FileModel = require("../models/img")
+const imgModel = require("../models/img")
 const CartModel = require('../models/AddtoCart');
 const CheckOutModel = require('../models/Checkout');
 const ProductModel = require('../models/AddProduct');
 const reviewmodel = require('../models/review');
 const userModel = require('../models/users');
 const promoModel = require('../models/promo');
+const videoModel = require("../models/video")
+const fileModel = require("../models/files")
 
 /* GET home page. */
 
 
 
 /************************************************/
-/*                    Multer                    */
+/*               Multer For Image               */
 /************************************************/
 const Storage = multer.diskStorage({
   destination: "./public/uploads/",
@@ -36,7 +38,7 @@ const Storage = multer.diskStorage({
 })
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'image/png') {
+  if (file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
     cb(null, true);
   } else {
     cb(null, false);
@@ -53,6 +55,36 @@ const multerUploads = multer({
 })
 
 const upload = multerUploads.fields([{ name: "file", maxCount: 4 }])
+
+
+/************************************************/
+/*               Multer For Video               */
+/************************************************/
+const videoStorage = multer.diskStorage({
+  destination: "./public/videos/",
+  filename: (req, files, cb) => {
+    cb(null, files.fieldname + "_" + Date.now() + path.extname(files.originalname))
+
+  }
+})
+
+const fileFilter2 = (req, files, cb) => {
+  // upload only mp4 and mkv format
+  if (!files.originalname.match(/\.(mp4|MPEG-4|mkv)$/)) {
+    return cb(new Error('Please upload a video'))
+  }
+  cb(undefined, true)
+}
+
+const videoUpload = multer({
+  storage: videoStorage,
+  limits: {
+    fileSize: 10000000 // 10000000 Bytes = 10 MB
+  },
+  fileFilter: fileFilter2
+
+})
+const upload2 = videoUpload.fields([{ name: "files", maxCount: 1 }])
 
 
 
@@ -214,7 +246,7 @@ router.post('/upload-file', upload, async (req, res) => {
   var imgs = req.files.file
   try {
     if (imgs) {
-      await new FileModel({
+      await new imgModel({
         image: imgs
       }).save()
         .then(data => {
@@ -234,6 +266,55 @@ router.post('/upload-file', upload, async (req, res) => {
 })
 
 
+/************************************************/
+/*             Upload An Video                  */
+/************************************************/
+router.post('/upload-video', upload2, async (req, res) => {
+  console.log("File", req.files.files);
+  var video = req.files.files
+  try {
+    if (video) {
+      await new videoModel({
+        video: video
+      }).save()
+        .then(data => {
+          console.log(data);
+          res.json({ message: "video data send sucessfully" })
+        })
+    } else {
+      res.json({ message: "invalid Extension" })
+    }
+
+
+  }
+  catch (error) {
+    console.log(error);
+    res.json({ error: "Error occured" })
+  }
+})
+
+/************************************************/
+/*             Upload Files                     */
+/************************************************/
+router.post('/upload-files', upload, upload2, async (req, res) => {
+  console.log("Files", req.files.file, req.files.files);
+  try {
+    await new fileModel({
+      image: req.files.file,
+      video: req.files.files
+    }).save()
+      .then(data => {
+        console.log(data);
+        res.json({ success: "file upload succesfully" })
+      })
+  } catch (error) {
+    console.log(error);
+    res.json({ error: "file not send due to some error" })
+
+  }
+})
+
+
 
 
 /************************************************/
@@ -248,30 +329,34 @@ router.post('/checkout', async (req, res) => {
   // SUBTOTAL
   const find1 = await CartModel.find({ UserId: req.body.UserId })
   console.log("Products", find1);
-  let subtotal;
   for (let i = 0; i <= find1.length - 1; i++) {
     // subtotal = find1[i].Price
     productsids.push(find1[i]._id)
     value += parseFloat(find1[i].Price)
   }
   console.log("loop", value);
+  //TOTAL AMOUNT
+  let totalAmount = value;
+
   // //PROMO CODE
-  const discount = await promoModel.find({promoCode : req.body.promoCode})
+  const discount = await promoModel.find({ promoCode: req.body.promoCode })
   console.log("discount", discount);
   let Dis = 0;
   for (let i = 0; i <= discount.length - 1; i++) {
-     Dis += discount[i].discount
+    Dis += discount[i].discount
   }
   console.log("Percentage", Dis);
-  if(discount){
+  if (discount) {
     let minus = value * Dis / 100
-    value -= minus
+    totalAmount -= minus
   }
+  //DISCOUNT AMOUNT
+  let discountAmount = minus;
   // ORDER ID
   let orderid;
   let count = await CheckOutModel.find({}).sort({ _id: -1 }).limit('1')
-  for(let i = 0; i <= count.length-1; i++){
-     orderid = count[i].Orderid
+  for (let i = 0; i <= count.length - 1; i++) {
+    orderid = count[i].Orderid
   }
   console.log("count", orderid);
   orderid += 1
@@ -301,7 +386,7 @@ router.post('/checkout', async (req, res) => {
         PaymentMethod: req.body.PaymentMethod,
         PaymentStatus: PaymentStatus,
         promoCode: req.body.promoCode,
-        Orderid: orderid ,
+        Orderid: orderid,
         Subtotal: value,
         Productids: productsids
       }).save()
