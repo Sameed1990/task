@@ -1,0 +1,14 @@
+Rating Socre and count in products table
+Order status update ki API banani hay
+Date ko har table main NUmber main save kerwana hay
+Promo code ka table 
+Order main agr promo use howa hay to subtotal main promo code ka off add hojai
+subtotal number main save kerna hay
+
+---------------------------------------------------------------------------------------
+
+Multer say Video or images save kerni hain
+images and video fetch kerne ki api banani hay
+images and video update kerne ki api banani hay
+images and video delete kerne ki api banani hay
+product pagination and filter
