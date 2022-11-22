@@ -1,0 +1,20 @@
+ROUTES
+=======================
+Users
+Add Product 
+Update Product
+Delete Product
+Delete Video and Image
+Add to Cart
+Update From Cart
+Remove From Cart
+Upload Files
+CheckOut
+Change Status
+Promo Code
+Place Order
+Review
+Get Review
+Get Review By UserId
+Get Review By productID
+Remove Review

@@ -24,67 +24,71 @@ const fileModel = require("../models/files")
 
 /* GET home page. */
 
-
-
-/************************************************/
-/*               Multer For Image               */
-/************************************************/
-const Storage = multer.diskStorage({
-  destination: "./public/uploads/",
-  filename: (req, file, cb) => {
-    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
-
-  }
+router.get('/products', async (req, res) => {
+  const find = await ProductModel.find({});
+  res.json({ data: find })
 })
+
+/************************************************/
+/*                   Multer                     */
+/************************************************/
+
+
+
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => { // setting destination of uploading files        
+    if (file.fieldname === "video") { // if uploading video
+      cb(null, './public/videos/');
+    } else { // else uploading image
+      cb(null, './public/uploads/');
+    }
+  },
+  filename: (req, file, cb) => { // naming file
+    cb(null, Date.now() + '-' + file.originalname)
+  }
+});
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
-    cb(null, true);
-  } else {
-    cb(null, false);
+  if (file.fieldname === "video") { // if uploading video
+    if (file.mimetype === 'video/mp4') { // check file type to be pdf, doc, or docx
+      cb(null, true);
+    } else {
+      cb(null, false); // else fails
+    }
+  } else { // else uploading image
+    if (
+      file.mimetype === 'image/png' ||
+      file.mimetype === 'image/jpg' ||
+      file.mimetype === 'image/jpeg'
+    ) { // check file type to be png, jpeg, or jpg
+      cb(null, true);
+    } else {
+      cb(null, false); // else fails
+    }
   }
-}
+};
 
-const multerUploads = multer({
-  storage: Storage,
-  limits: {
-    fileSize: 1024 * 1024 * 5 // define limit 5mb max file upload size
-  },
-  fileFilter: fileFilter
-
-})
-
-const upload = multerUploads.fields([{ name: "file", maxCount: 4 }])
-
-
-/************************************************/
-/*               Multer For Video               */
-/************************************************/
-const videoStorage = multer.diskStorage({
-  destination: "./public/videos/",
-  filename: (req, files, cb) => {
-    cb(null, files.fieldname + "_" + Date.now() + path.extname(files.originalname))
-
+const upload = multer(
+  {
+    storage: fileStorage,
+    limits:
+    {
+      fileSize: '2mb'
+    },
+    fileFilter: fileFilter
   }
-})
-
-const fileFilter2 = (req, files, cb) => {
-  // upload only mp4 and mkv format
-  if (!files.originalname.match(/\.(mp4|MPEG-4|mkv)$/)) {
-    return cb(new Error('Please upload a video'))
-  }
-  cb(undefined, true)
-}
-
-const videoUpload = multer({
-  storage: videoStorage,
-  limits: {
-    fileSize: 10000000 // 10000000 Bytes = 10 MB
-  },
-  fileFilter: fileFilter2
-
-})
-const upload2 = videoUpload.fields([{ name: "files", maxCount: 1 }])
+).fields(
+  [
+    {
+      name: 'video',
+      maxCount: 1
+    },
+    {
+      name: 'image',
+      maxCount: 1
+    }
+  ]
+)
 
 
 
@@ -126,8 +130,9 @@ router.post('/add-product', upload, async (req, res) => {
       ProductCategory: req.body.ProductCategory,
       Price: req.body.Price,
       Quantity: req.body.Quantity,
-      // Productimg: imgs,
-      Details: req.body.Details
+      Details: req.body.Details,
+      image: req.files.image,
+      video: req.files.video
     }).save()
       .then(data => {
         console.log(data);
@@ -138,6 +143,64 @@ router.post('/add-product', upload, async (req, res) => {
     res.json({ error: "internel server error" })
   }
 
+})
+
+
+/************************************************/
+/*                 Update Product               */
+/************************************************/
+router.post('/update-product/:id?',upload, async (req, res) => {
+  console.log(req.params.id);
+  try {
+    const update = ProductModel.findOneAndUpdate({_id : req.params.id} , {
+      ProductName: req.body.ProductName,
+      ProductCategory: req.body.ProductCategory,
+      Price: req.body.Price,
+      Quantity: req.body.Quantity,
+      Details: req.body.Details,
+      image: req.files.image,
+      video: req.files.video
+    }).then(data=>{
+      console.log(data);
+      res.json({message : "product update succesfully"})
+    })
+  } catch (error) {
+    console.log(error);
+    res.json({err : "error"})
+  }
+})
+
+/************************************************/
+/*                Delete Product                */
+/************************************************/
+router.post('/delete-product/:id?' , async (req , res)=>{
+  console.log(req.params.id);
+  try {
+    const find = ProductModel.findOneAndDelete({_id : req.params.id})
+    .then(data=>{
+      console.log(data);
+      res.json({message : "product delete  succesfully"})
+    })
+  } catch (error) {
+    console.log(error);
+    res.json({err : "error"})
+  }
+})
+/************************************************/
+/*             Delete Video and Image           */
+/************************************************/
+router.post('/remove-product-files/:id?' , async (req , res)=>{
+  console.log(req.params.id);
+  try {
+    const find = ProductModel.findOneAndUpdate({_id : req.params.id},{$unset : {image : "" , video : ""}})
+    .then(data=>{
+      console.log(data);
+      res.json({message : "feild remove succesfully"})
+    })
+  } catch (error) {
+    console.log(error);
+    res.json({err : "error"})
+  }
 })
 
 
@@ -241,7 +304,7 @@ router.post('/remove-item/:id', async (req, res) => {
 /************************************************/
 /*             Upload An Image                  */
 /************************************************/
-router.post('/upload-file', upload, async (req, res) => {
+router.post('/upload-file', async (req, res) => {
   console.log("File", req.files.file);
   var imgs = req.files.file
   try {
@@ -269,7 +332,7 @@ router.post('/upload-file', upload, async (req, res) => {
 /************************************************/
 /*             Upload An Video                  */
 /************************************************/
-router.post('/upload-video', upload2, async (req, res) => {
+router.post('/upload-video', async (req, res) => {
   console.log("File", req.files.files);
   var video = req.files.files
   try {
@@ -296,12 +359,12 @@ router.post('/upload-video', upload2, async (req, res) => {
 /************************************************/
 /*             Upload Files                     */
 /************************************************/
-router.post('/upload-files', upload, upload2, async (req, res) => {
-  console.log("Files", req.files.file, req.files.files);
+router.post('/upload-files', upload, async (req, res) => {
+  console.log("Files", req.files.file, req.files.file);
   try {
     await new fileModel({
-      image: req.files.file,
-      video: req.files.files
+      image: req.files.image,
+      video: req.files.video
     }).save()
       .then(data => {
         console.log(data);
