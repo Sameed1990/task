@@ -29,6 +29,10 @@ router.get('/products', async (req, res) => {
   res.json({ data: find })
 })
 
+router.get('/', async (req, res) => {
+  res.render('index')
+})
+
 /************************************************/
 /*                   Multer                     */
 /************************************************/
@@ -149,10 +153,10 @@ router.post('/add-product', upload, async (req, res) => {
 /************************************************/
 /*                 Update Product               */
 /************************************************/
-router.post('/update-product/:id?',upload, async (req, res) => {
+router.post('/update-product/:id?', upload, async (req, res) => {
   console.log(req.params.id);
   try {
-    const update = ProductModel.findOneAndUpdate({_id : req.params.id} , {
+    const update = ProductModel.findOneAndUpdate({ _id: req.params.id }, {
       ProductName: req.body.ProductName,
       ProductCategory: req.body.ProductCategory,
       Price: req.body.Price,
@@ -160,46 +164,46 @@ router.post('/update-product/:id?',upload, async (req, res) => {
       Details: req.body.Details,
       image: req.files.image,
       video: req.files.video
-    }).then(data=>{
+    }).then(data => {
       console.log(data);
-      res.json({message : "product update succesfully"})
+      res.json({ message: "product update succesfully" })
     })
   } catch (error) {
     console.log(error);
-    res.json({err : "error"})
+    res.json({ err: "error" })
   }
 })
 
 /************************************************/
 /*                Delete Product                */
 /************************************************/
-router.post('/delete-product/:id?' , async (req , res)=>{
+router.post('/delete-product/:id?', async (req, res) => {
   console.log(req.params.id);
   try {
-    const find = ProductModel.findOneAndDelete({_id : req.params.id})
-    .then(data=>{
-      console.log(data);
-      res.json({message : "product delete  succesfully"})
-    })
+    const find = ProductModel.findOneAndDelete({ _id: req.params.id })
+      .then(data => {
+        console.log(data);
+        res.json({ message: "product delete  succesfully" })
+      })
   } catch (error) {
     console.log(error);
-    res.json({err : "error"})
+    res.json({ err: "error" })
   }
 })
 /************************************************/
 /*             Delete Video and Image           */
 /************************************************/
-router.post('/remove-product-files/:id?' , async (req , res)=>{
+router.post('/remove-product-files/:id?', async (req, res) => {
   console.log(req.params.id);
   try {
-    const find = ProductModel.findOneAndUpdate({_id : req.params.id},{$unset : {image : "" , video : ""}})
-    .then(data=>{
-      console.log(data);
-      res.json({message : "feild remove succesfully"})
-    })
+    const find = ProductModel.findOneAndUpdate({ _id: req.params.id }, { $unset: { image: "", video: "" } })
+      .then(data => {
+        console.log(data);
+        res.json({ message: "feild remove succesfully" })
+      })
   } catch (error) {
     console.log(error);
-    res.json({err : "error"})
+    res.json({ err: "error" })
   }
 })
 
@@ -499,7 +503,38 @@ router.post('/add-promo-code', async (req, res) => {
       res.json({ err: "promo code not add due to some error" })
     })
 })
+/************************************************/
+/*              Update Promo Code               */
+/************************************************/
+router.post('/update-promo-code/:id?', async (req, res) => {
+  try {
+    await promoModel.findOneAndUpdate({ _id: req.params.id }, {
+      promoCode: req.body.promoCode, discount: req.body.discount
+    }).then(data => {
+      console.log(data);
+      res.json({ message: "update successfully" })
+    })
 
+
+  } catch (error) {
+    console.log(error);
+    res.json({ err: "error" })
+  }
+})
+/************************************************/
+/*              Delete Promo Code               */
+/************************************************/
+router.post('/delete-promo-code/:id?', async (req, res) => {
+  try {
+    await promoModel.findOneAndDelete({ _id: req.params.id })
+      .then(data => {
+        res.json({ message: "promo delete successfully" })
+      })
+  } catch (error) {
+    console.log(error);
+    res.json({ err: "promo code not delete due to some error" })
+  }
+})
 /************************************************/
 /*                 Place Order                  */
 /************************************************/
@@ -615,6 +650,35 @@ router.post('/remove-review', async (req, res) => {
     res.json({ error: "error occured" })
   }
 })
+
+/************************************************/
+/*                 Search Bar                   */
+/************************************************/
+router.get('/search', async (req, res) => {
+  let regex = new RegExp(req.query["term"], 'i');
+  await ProductModel.find({ ProductName: regex }, { "ProductName": 1 })
+    .then(data => {
+      console.log(data);
+      myLabels = data.map(e => e.ProductName)
+      console.log("----------",myLabels);
+      return res.jsonp({ label: myLabels })
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
+
+router.get('/search2/:pname?', async (req, res) => {
+  await ProductModel.find({ ProductName: req.params.pname })
+    .then(data => {
+      console.log(data);
+      return res.json({ data })
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
+
 
 
 

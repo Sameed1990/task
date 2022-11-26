@@ -10,9 +10,8 @@ const ProductSchema = mongoose.Schema({
     Details: { type: String, required: true },
     ratingScore: { type: Number , default : null },
     count: { type: Number ,  default : null },
-    image : {type : Array , required : true},
-    video : {type : Array , required : true}
-    
+    image : {type : Array},
+    video : {type : Array}
 })
 
 const ProductModel = mongoose.model('products', ProductSchema)
